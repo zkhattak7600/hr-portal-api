@@ -1,0 +1,29 @@
+﻿# Build output
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+publish/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.rsuser
+
+# SQLite database
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+
+# User uploads
+wwwroot/uploads/
+
+# Local secrets / settings
+appsettings.Development.json
+appsettings.Local.json
+*.local.json
+.env

@@ -1,0 +1,6 @@
+﻿@EmployeeLeaveApi_HostAddress = http://localhost:5020
+
+GET {{EmployeeLeaveApi_HostAddress}}/api/auth/me/
+Accept: application/json
+
+###
