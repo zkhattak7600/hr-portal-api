@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using System.Text;
 using EmployeeLeaveApi.Data;
 using EmployeeLeaveApi.Services;
@@ -27,8 +27,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
+// CORS: allowed origins come from config (Cors:AllowedOrigins as an array or a comma-separated string).
+var corsSection = builder.Configuration.GetSection("Cors:AllowedOrigins");
+var allowedOrigins = corsSection.GetChildren().Select(c => c.Value)
+    .Concat((corsSection.Value ?? "").Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    .Where(o => !string.IsNullOrWhiteSpace(o)).Select(o => o!.TrimEnd('/'))
+    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+if (allowedOrigins.Count == 0) allowedOrigins.Add("http://localhost:4200");
+var allowVercelPreviews = builder.Configuration.GetValue<bool>("Cors:AllowVercelPreviews");
 builder.Services.AddCors(o => o.AddPolicy("AllowAngular", p =>
-    p.WithOrigins("http://localhost:4200").AllowAnyHeader().AllowAnyMethod()));
+    p.SetIsOriginAllowed(origin =>
+        allowedOrigins.Contains(origin.TrimEnd('/')) ||
+        (allowVercelPreviews && Uri.TryCreate(origin, UriKind.Absolute, out var u) && u.Scheme == "https"
+            && u.Host.StartsWith("hr-portal-angular", StringComparison.OrdinalIgnoreCase)
+            && u.Host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase)))
+     .AllowAnyHeader().AllowAnyMethod()));
 
 builder.Services.AddControllers().AddJsonOptions(o =>
 {
@@ -64,19 +77,35 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    DbSeeder.Seed(scope.ServiceProvider.GetRequiredService<AppDbContext>());
+    DbSeeder.Seed(scope.ServiceProvider.GetRequiredService<AppDbContext>(), app.Configuration.GetValue<bool>("DemoMode"));
 }
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Swagger is enabled in every environment so the live demo exposes /swagger.
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 Directory.CreateDirectory(Path.Combine(app.Environment.ContentRootPath, "wwwroot", "uploads", "avatars"));
 app.UseStaticFiles();
 app.UseCors("AllowAngular");
+
+// Public demo: destructive actions and password resets are disabled (DemoMode=false locally).
+if (app.Configuration.GetValue<bool>("DemoMode"))
+{
+    app.Use(async (ctx, next) =>
+    {
+        var path = ctx.Request.Path.Value ?? "";
+        if (HttpMethods.IsDelete(ctx.Request.Method)
+            || path.StartsWith("/api/auth/forgot-password", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/api/auth/reset-password", StringComparison.OrdinalIgnoreCase))
+        {
+            ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await ctx.Response.WriteAsJsonAsync(new { message = "Disabled in demo" });
+            return;
+        }
+        await next();
+    });
+}
 app.UseAuthentication();
 app.UseAuthorization();
 

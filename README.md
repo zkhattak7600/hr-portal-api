@@ -12,6 +12,25 @@ Frontend: **[hr-portal-angular](https://github.com/zkhattak7600/hr-portal-angula
 
 ---
 
+## 🚀 Live Demo
+
+| | Link |
+|---|---|
+| **App** | https://hr-portal-angular.vercel.app |
+| **API (Swagger)** | https://hr-portal-api.onrender.com/swagger |
+
+On the login page click **Try as Admin** or **Try as Employee**, or sign in manually:
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | `demo.admin@hrportal.demo` | `Demo@123` |
+| Employee | `demo.employee@hrportal.demo` | `Demo@123` |
+
+> ⏳ The API runs on Render's free tier and sleeps when idle — the **first request can take ~50 seconds** to wake it up.
+> In the demo, delete actions and password resets are disabled and the data resets whenever the server restarts.
+
+---
+
 ## Features
 - **JWT authentication** — register, login, forgot / reset password; passwords hashed with **BCrypt**
 - **Role-based access** — Admin and Employee roles
@@ -89,3 +108,11 @@ Program.cs     # DI, auth, CORS, Swagger setup
 
 ## Author
 **Zain Khattak** — [@zkhattak7600](https://github.com/zkhattak7600)
+
+## Deployment (Render, Docker)
+- `Dockerfile` — multi-stage build (.NET 8 SDK → ASP.NET runtime), listens on `$PORT` (default 8080), stores SQLite in `/app/data`.
+- `render.yaml` — Render Blueprint for a free web service. It sets `ASPNETCORE_ENVIRONMENT=Production`, generates a random `Jwt__Key`, enables `DemoMode`, and allows the Vercel frontend via `Cors__AllowedOrigins__0`.
+- `DemoMode=true` seeds ~100 employees with a month of attendance, leave requests and payslips plus the demo logins, and blocks all `DELETE` requests and password resets (HTTP 403 "Disabled in demo").
+- Locally nothing changes: `DemoMode` is `false` and CORS allows `http://localhost:4200` by default (see `appsettings.json`).
+
+Free-tier note: Render's free disk is ephemeral, so the demo database is recreated on every deploy/restart.

@@ -1,0 +1,15 @@
+﻿bin/
+obj/
+.vs/
+.vscode/
+.git/
+*.user
+*.db
+*.db-*
+*.sqlite
+wwwroot/uploads/
+appsettings.Development.json
+appsettings.Local.json
+Dockerfile
+.dockerignore
+README.md

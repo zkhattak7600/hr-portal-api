@@ -1,4 +1,4 @@
-using EmployeeLeaveApi.Models;
+﻿using EmployeeLeaveApi.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace EmployeeLeaveApi.Data;
@@ -57,7 +57,7 @@ public static class DbSeeder
         finally { if (!wasOpen) conn.Close(); }
     }
 
-    public static void Seed(AppDbContext db)
+    public static void Seed(AppDbContext db, bool demoMode = false)
     {
         db.Database.EnsureCreated();
         EnsurePhotoUrlColumn(db);
@@ -107,6 +107,9 @@ public static class DbSeeder
                 });
             db.SaveChanges();
         }
+
+        // Public demo only: ~100 employees, demo logins, a month of attendance, leaves and payslips.
+        if (demoMode) DemoSeeder.Seed(db);
 
         SeedEmployeeUsers(db);
         SeedPayslips(db);

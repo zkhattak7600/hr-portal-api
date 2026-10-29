@@ -1,0 +1,22 @@
+﻿# Render Blueprint: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: hr-portal-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /swagger/index.html
+    autoDeploy: true
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: Jwt__Key
+        generateValue: true
+      - key: DemoMode
+        value: "true"
+      - key: Cors__AllowedOrigins__0
+        value: https://hr-portal-angular.vercel.app
+      - key: Cors__AllowVercelPreviews
+        value: "true"
+      - key: ConnectionStrings__DefaultConnection
+        value: Data Source=/app/data/employeeleave.db
